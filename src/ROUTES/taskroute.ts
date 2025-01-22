@@ -1,14 +1,35 @@
-import { gettask, Createtask, assignuser, deleteuser, updatetask, bulkDeleteTasks, bulkUpdateTasks } from "../controllers/taskcontroller";
-import { Router } from "express";
 
-const router = Router()
+import { Router } from 'express';
+import {
+  createTask,
+  getTasks,
+  updateTask,
+  deleteuser,
+  assignuser,
+  bulkDeleteTasks,
+  bulkUpdateTasks,
+  addComment,
+  addTimeLog,
+  getTaskAnalytics
+} from '../controllers/taskcontroller';
 
-router.get("/getTask", gettask);
-router.post("/Createtask", Createtask);
-router.delete("/deleteuser", deleteuser);
-router.patch("/assignuser", assignuser);
-router.patch("/updatetask", updatetask);
-router.delete("/bulkdelete", bulkDeleteTasks)
-router.patch("/bulkupdatetask", bulkUpdateTasks)
+const router = Router();
 
-export default router
+
+router.post('/create', createTask);
+router.get('/all', getTasks);
+router.put('/update', updateTask);
+ router.delete('/delete', deleteuser);
+
+
+router.post('/assign', assignuser);
+router.post('/bulk-delete', bulkDeleteTasks);
+router.post('/bulk-update', bulkUpdateTasks);
+
+
+router.post('/comment', addComment);
+router.post('/time-log', addTimeLog);
+router.get('/analytics', getTaskAnalytics);
+
+export default router;
+
