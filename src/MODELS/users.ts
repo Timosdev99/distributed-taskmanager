@@ -72,7 +72,8 @@ const userschema = new Schema<users> ({
     userschema.methods.comparePassword = async (candidatepassword: string) => {
        
    try {
-   // return bcrypt.compare(candidatepassword, this.password)
+   // const password: string = this.password;
+// return bcrypt.compare(candidatepassword, password)
    }
 
    catch(error)  {

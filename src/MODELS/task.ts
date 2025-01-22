@@ -1,6 +1,8 @@
 import {model, Schema} from "mongoose"
+import { ObjectId } from "mongodb"
 
 interface task {
+    _id: ObjectId,
     title: string,
     description: string,
     status: "pending" | "in-progress" | "completed",
@@ -9,6 +11,7 @@ interface task {
 }
 
 const taskschema = new Schema<task>({
+
     title: {
         type: String,
         required: true,
