@@ -129,3 +129,77 @@ export const assignuser = async (req: Request, res: Response) => {
      return 
   }
 };
+
+
+
+
+export const bulkDeleteTasks = async (req: Request, res: Response) => {
+  try {
+    const { ids } = req.body;
+
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+     res.status(400).json({ message: "Task IDs are required in an array" });
+     return 
+    }
+
+    // Delete tasks
+    const result = await taskmodel.deleteMany({ _id: { $in: ids } });
+
+    // Check result
+    if (result.deletedCount === 0) {
+    res.status(404).json({ message: "No tasks found for deletion" });
+    return 
+    }
+
+    res.status(200).json({ message: `${result.deletedCount} tasks deleted successfully` });
+    return
+  } catch (error) {
+    console.error(error);
+   res.status(500).json({ message: "Failed to delete tasks" });
+   return 
+  }
+};
+
+// Bulk Updating
+export const bulkUpdateTasks = async (req: Request, res: Response) => {
+  try {
+    const { updates } = req.body;
+
+    // Validate input
+    if (!updates || !Array.isArray(updates) || updates.length === 0) {
+      res.status(400).json({ message: "Updates are required in an array" });
+      return 
+    }
+
+    const updateResults = [];
+
+    // Iterate through updates and apply them
+    for (const update of updates) {
+      const { id, ...fieldsToUpdate } = update;
+
+      if (!id || Object.keys(fieldsToUpdate).length === 0) {
+        updateResults.push({ id, success: false, message: "Invalid update format" });
+        continue;
+      }
+
+      const updatedTask = await taskmodel.findByIdAndUpdate(id, fieldsToUpdate, { new: true });
+
+      if (updatedTask) {
+        updateResults.push({ id, success: true, updatedTask });
+      } else {
+        updateResults.push({ id, success: false, message: "Task not found" });
+      }
+    }
+
+   res.status(200).json({
+      message: "Bulk update operation completed",
+      results: updateResults,
+    });
+    return 
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to update tasks" });
+    return 
+}
+};
