@@ -10,7 +10,8 @@ import {
   bulkUpdateTasks,
   addComment,
   addTimeLog,
-  getTaskAnalytics
+  getTaskAnalytics,
+  getTaskById
 } from '../controllers/taskcontroller';
 
 const router = Router();
@@ -30,6 +31,7 @@ router.post('/bulk-update', bulkUpdateTasks);
 router.post('/comment', addComment);
 router.post('/time-log', addTimeLog);
 router.get('/analytics', getTaskAnalytics);
+router.get("/task/:id", getTaskById);
 
 export default router;
 

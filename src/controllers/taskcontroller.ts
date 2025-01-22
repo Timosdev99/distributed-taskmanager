@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import TaskModel, { TaskDocument } from "../MODELS/task";
+import mongoose from "mongoose";
 
 
 interface CreateTaskRequest {
@@ -103,7 +104,7 @@ export const getTasks = async (req: Request<{}, {}, {}, TaskFilters>, res: Respo
       tags,
       category
     } = req.query;
-
+   
     const filter: any = {};
 
     if (status) filter.status = status;
@@ -111,7 +112,6 @@ export const getTasks = async (req: Request<{}, {}, {}, TaskFilters>, res: Respo
     if (assignedTo) filter.assignedTo = assignedTo;
     if (category) filter.category = category;
     if (tags) filter.tags = { $in: Array.isArray(tags) ? tags : [tags] };
-    
     if (dueBefore || dueAfter) {
       filter.dueDate = {};
       if (dueBefore) filter.dueDate.$lte = new Date(dueBefore);
@@ -426,3 +426,34 @@ export const deleteuser = async (req: Request, res: Response) => {
   };
   
   
+  export const getTaskById = async (req: Request, res: Response) => {
+    try {
+
+        const {id} = req.params
+        if(!id) {
+            res.status(404).json({message: "id is required"})
+            return
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            res.status(400).json({ message: "Invalid user ID format" });
+            return;
+          }
+
+        const user = await TaskModel.findById(id)
+        if (!user) {
+            res.status(404).json({message: "user not found"})
+        }
+        
+        res.status(200).json({message: "user succesfully gotten",
+            user
+        })
+        return
+        
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to get tasks by id" });
+        return
+        
+    }
+  }

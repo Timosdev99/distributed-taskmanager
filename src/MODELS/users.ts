@@ -1,11 +1,12 @@
 
-import { model, Schema } from "mongoose";
+import { model, Schema, Document } from "mongoose";
+import { ObjectId } from "mongodb";
 import  bcrypt from "bcrypt"
 
 interface users {
-    _id?: number, 
     name: string,
     email: string,
+    role: "admin" | "manager" | "user",
     password: string,
     otp: {
         code: string;
@@ -17,7 +18,10 @@ interface users {
     joinedAt?: Date
 }
 
-const userschema = new Schema<users> ({
+
+interface userDoc extends users, Document {}
+
+const userschema = new Schema<userDoc> ({
     name: {
         type: String,
         required: true,
@@ -28,6 +32,13 @@ const userschema = new Schema<users> ({
         type: String,
         required: true,
         unique: true,
+        lowercase: true,
+        trim: true
+    },
+      role: {
+        type: String,
+        required: true,
+        enum: ["admin", "manager", "user"],
         lowercase: true,
         trim: true
     },
@@ -72,7 +83,7 @@ const userschema = new Schema<users> ({
     userschema.methods.comparePassword = async (candidatepassword: string) => {
        
    try {
-   // const password: string = this.password;
+  // const password: string = this.password;
 // return bcrypt.compare(candidatepassword, password)
    }
 
@@ -87,6 +98,6 @@ const userschema = new Schema<users> ({
 
 
 
-const usermodel = model<users>("users", userschema)
+const usermodel = model<userDoc>("users", userschema)
 
 export default usermodel
