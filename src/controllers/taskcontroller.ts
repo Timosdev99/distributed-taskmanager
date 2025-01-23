@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import TaskModel, { TaskDocument } from "../MODELS/task";
+import { setCache, deleteCache, getCache } from "../utils/caching";
 import mongoose from "mongoose";
+import { error } from "console";
+import { promisify } from "util";
 
 
 interface CreateTaskRequest {
@@ -40,6 +43,9 @@ interface TaskFilters {
   tags?: string[];
   category?: string;
 }
+
+
+
 
 
 export const createTask = async (req: Request<{}, {}, CreateTaskRequest>, res: Response) => {
@@ -143,7 +149,7 @@ export const updateTask = async (req: Request<{}, {}, UpdateTaskRequest>, res: R
      res.status(400).json({ message: "Task ID is required" });
      return
     }
-
+ 
     
     if (updates.status === 'completed') {
       const currentTask = await TaskModel.findById(_id);
@@ -151,6 +157,7 @@ export const updateTask = async (req: Request<{}, {}, UpdateTaskRequest>, res: R
         updates.completionPercentage = 100;
       }
     }
+
 
     const updatedTask = await TaskModel.findByIdAndUpdate(
       _id,
@@ -168,7 +175,11 @@ export const updateTask = async (req: Request<{}, {}, UpdateTaskRequest>, res: R
       res.status(404).json({ message: "Task not found" });
       return 
     }
-
+     
+    deleteCache(_id);
+    setCache(_id, updatedTask);
+   
+    
      res.status(200).json({
       message: "Task updated successfully",
       task: updatedTask
@@ -310,6 +321,8 @@ export const deleteuser = async (req: Request, res: Response) => {
         return
       }
   
+      deleteCache(_id);
+
        res.status(200).json({
         message: `Task with ID: ${_id} deleted successfully`,
       });
@@ -440,13 +453,29 @@ export const deleteuser = async (req: Request, res: Response) => {
             return;
           }
 
-        const user = await TaskModel.findById(id)
-        if (!user) {
+          const cachedTask = await getCache(id) ;
+          if (cachedTask) {
+           res.status(200).json({
+              message: "Task retrieved from cache",
+              task: JSON.parse(cachedTask),
+            });
+            return 
+          }
+
+
+        const task = await TaskModel.findById(id)
+        if (!task) {
             res.status(404).json({message: "user not found"})
         }
-        
+
+        try {
+            await setCache(id, task);
+        } catch (cacheError) {
+            console.error("Cache write error:", cacheError);
+        }
+
         res.status(200).json({message: "user succesfully gotten",
-            user
+            task
         })
         return
         

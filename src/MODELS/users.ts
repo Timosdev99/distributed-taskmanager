@@ -83,8 +83,9 @@ const userschema = new Schema<userDoc> ({
     userschema.methods.comparePassword = async (candidatepassword: string) => {
        
    try {
-  // const password: string = this.password;
-// return bcrypt.compare(candidatepassword, password)
+   // const password = this.password || '';
+ //bcrypt.compare(candidatepassword, password)
+ return
    }
 
    catch(error)  {
@@ -98,6 +99,5 @@ const userschema = new Schema<userDoc> ({
 
 
 
-const usermodel = model<userDoc>("users", userschema)
+export const usermodel = model<userDoc>("users", userschema)
 
-export default usermodel
