@@ -2,10 +2,10 @@ import { createClient } from "redis";
 
 export const redisClient = createClient({
   socket: {
-    host: /*host endpoint*/,
-    port: /*redis port */
+    host: yourhostenpoint ,
+    port: yourresdisportnumber
   },
-  password: /* password */
+  password: yourpassword
 });
 
 redisClient.on("error", (err) => console.error("Redis Client Error", err));
