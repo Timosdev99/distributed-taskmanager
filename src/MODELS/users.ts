@@ -1,7 +1,5 @@
-
 import { model, Schema, Document } from "mongoose";
-import { ObjectId } from "mongodb";
-import  bcrypt from "bcrypt"
+import  bcrypt from "bcryptjs"
 
 interface users {
     name: string,
@@ -80,18 +78,6 @@ const userschema = new Schema<userDoc> ({
     });
 
 
-    userschema.methods.comparePassword = async (candidatepassword: string) => {
-       
-   try {
-   // const password = this.password || '';
- //bcrypt.compare(candidatepassword, password)
- return
-   }
-
-   catch(error)  {
-    throw error
-   }
-    }
 
     userschema.methods.isLocked = function() {
         return !!(this.lockUntil && this.lockUntil > Date.now());

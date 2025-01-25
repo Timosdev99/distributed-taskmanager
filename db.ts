@@ -9,6 +9,9 @@ const connectDB = async (): Promise<void> => {
 
         await mongoose.connect(process.env.MONGO_DB_URI, {
            
+
+            // socketTimeoutMS: 45000,
+            // serverSelectionTimeoutMS: 5000
            // useNewUrlParser: true,
            // useUnifiedTopology: true,
         });

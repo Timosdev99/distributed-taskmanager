@@ -99,6 +99,29 @@ export const createTask = async (req: Request<{}, {}, CreateTaskRequest>, res: R
   }
 };
 
+
+
+
+export const getAllTask = async(req: Request, res: Response) => {
+    try {
+        const alltasks = await TaskModel.find()
+                       .sort({ lastActivityAt: -1 })
+
+                       res.status(200).json({
+                        alltasks,
+                        count: alltasks.length
+                      });
+                      return
+                    } catch (error) {
+                      console.error(error);
+                     res.status(500).json({ message: "Failed to fetch tasks" });
+                     return 
+                    }
+}
+
+
+
+
 export const getTasks = async (req: Request<{}, {}, {}, TaskFilters>, res: Response) => {
   try {
     const {
