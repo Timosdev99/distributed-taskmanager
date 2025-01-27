@@ -11,12 +11,7 @@ app.use(cookieParser())
 app.use(express.json())
 
 
-const generateCookies = (userId: string) => {
-     const secretkey: any = process.env.SECRET_KEY
-     const token = jwt.sign(userId, secretkey, {
-        expiresIn: "1h"
-     } )
-}
+
 
 
 export const signUp = async (req: Request, res: Response) => {
@@ -54,65 +49,128 @@ const user = new usermodel({
     }
 }
 
+
+
+const generateCookies = (userId: string) => {
+    const secretKey = process.env.SECRET_KEY as string;
+    const token = jwt.sign({ id: userId }, secretKey, {
+        expiresIn: "1d", 
+    });
+    return token;
+};
+
 export const login = async (req: Request, res: Response) => {
     try {
-           const {email, password} = req.body
-           if(!email || !password) {
-            res.status(400).json({message: "email and password required"});
-            return
-           }
+        const { email, password } = req.body;
 
-           const user = await usermodel.findOne({ email }).select('+password');
-           if (!user) {
-            res.status(400).json({message: "user those not exist"})
-           }
-     
-           const checkpass = bcrypt.compare(password, user?.password as string)
-           if(password !== checkpass) {
-           let attempt = user?.loginAttempts as number 
-           attempt++
-           if (attempt >= 5) {
-           let locked =  user?.lockUntil as unknown as number
-           locked = Date.now() + 15 * 60 * 1000;
-           }
-   
-           if (user) {
-            await user.save();
-          } else {
-            throw new Error("User not found");
-          }
-          res.status(423).json({message: "incorrect password or email"})
-           return
+        if (!email || !password) {
+            res.status(400).json({ message: "Email and password are required" });
+            return;
+        }
 
-           } 
-
-           let attempt = user?.loginAttempts as number 
-           attempt = 0
-           let locked =  user?.lockUntil as unknown as any
-           locked = undefined
-           if (user) {
-            await user.save();
-          } else {
-            throw new Error("User not found");
-          }
        
-           const token = generateCookies(user.id);
-       
-           res.status(200).json({
-             status: 'success',
-             token,
-             data: {
-               user: {
-                 id: user._id,
-                 username: user.name,
-                 email: user.email,
-               },
-             },
-           });
+        const user = await usermodel.findOne({ email }).select("+password");
+        if (!user) {
+            res.status(400).json({ message: "Invalid email or password" });
+            return;
+        }
 
+        
+        if (user.lockUntil && user.lockUntil > new Date()) {
+            const timeRemaining = Math.ceil((user.lockUntil.getTime() - Date.now()) / 1000);
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            res.status(423).json({
+                message: `Too many attempts, try again later in ${minutes} minutes and ${seconds} seconds.`,
+            });
+            return;
+        }
+
+       
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            user.loginAttempts += 1;
+
+            if (user.loginAttempts >= 5) {
+                user.lockUntil = new Date(Date.now() + 15 * 60 * 1000); 
+                await user.save();
+                res.status(423).json({
+                    message: "Too many attempts, try again later.",
+                });
+                return;
+            }
+
+            await user.save();
+            res.status(400).json({
+                message: "Invalid email or password",
+                attemptsRemaining: 5 - user.loginAttempts,
+            });
+            return;
+        }
+
+       
+        user.loginAttempts = 0;
+        user.lockUntil = null;
+        await user.save();
+
+        
+        const token = generateCookies(user.id);
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production", 
+            sameSite: "strict",
+            maxAge: 24 * 60 * 60 * 1000,
+        });
+
+        res.status(200).json({
+            status: "success",
+            message: "Login successful",
+            user: {
+                id: user._id,
+                email: user.email,
+            },
+        });
     } catch (error) {
-         console.log(error)
-         res.status(500).json({message: "failed to login"})
+        console.error("Login error:", error);
+        res.status(500).json({ message: "Failed to login" });
     }
-}
+};
 
+export const getUser = async (req: Request, res: Response) => {
+    try {
+        
+        const { id } = req.params;
+
+        
+        if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+            res.status(400).json({ message: "Invalid user ID format" });
+            return;
+        }
+
+        
+        const user = await usermodel.findById(id);
+        if (!user) {
+            res.status(404).json({ message: "User not found" });
+            return;
+        }
+
+        
+        res.status(200).json({
+            status: "success",
+            message: "User retrieved successfully",
+            data: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+               
+            },
+        });
+    } catch (error) {
+        console.error("Error retrieving user:", error);
+
+
+        res.status(500).json({
+            message: "An error occurred while retrieving the user",
+        });
+    }
+};

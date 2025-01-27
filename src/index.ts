@@ -5,8 +5,10 @@ import taskroute from "./ROUTES/taskroute"
 import userroute from "./ROUTES/userroute"
  const PORT = 3000
 const app: Application = express();
+import cookieParser = require("cookie-parser");
 
 app.use(express.json())
+app.use(cookieParser())
 
 app.use('/tasks/v1', taskroute)
 app.use('/user/v1', userroute)

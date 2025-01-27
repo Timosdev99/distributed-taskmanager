@@ -1,5 +1,6 @@
 import { model, Schema, Document } from "mongoose";
 import  bcrypt from "bcryptjs"
+import { date } from "joi";
 
 interface users {
     name: string,
@@ -12,7 +13,7 @@ interface users {
     },
     lastPasswordReset: Date,
     loginAttempts: number,
-    lockUntil: Date,
+    lockUntil: Date | null,
     joinedAt?: Date
 }
 
@@ -59,7 +60,9 @@ const userschema = new Schema<userDoc> ({
         type: Number,
         default: 0,
       },
-      lockUntil: Date,
+    lockUntil: {
+      type: Date
+    }
     }, {
       timestamps: true,
     });
