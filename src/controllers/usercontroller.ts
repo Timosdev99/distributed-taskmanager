@@ -24,12 +24,13 @@ if(!name || !email || !password) {
     return
 }
 
-
 const existinguser = await usermodel.findOne({email})
 if(existinguser) {
     res.status(400).json({message: "email as been used already"})
     return
 }
+
+
 
 const user = new usermodel({
     name,

@@ -2,8 +2,7 @@ import { Request, Response } from "express";
 import TaskModel, { TaskDocument } from "../MODELS/task";
 import { setCache, deleteCache, getCache } from "../utils/caching";
 import mongoose from "mongoose";
-import { error } from "console";
-import { promisify } from "util";
+
 
 
 interface CreateTaskRequest {
@@ -81,7 +80,7 @@ export const createTask = async (req: Request<{}, {}, CreateTaskRequest>, res: R
       tags: tags || [],
       category,
       watchers: watchers || [],
-      createdBy: 'system', 
+      createdBy: req.user.name || 'system', 
       completionPercentage: 0,
       lastActivityAt: new Date()
     });
