@@ -175,3 +175,28 @@ export const getUser = async (req: Request, res: Response) => {
         });
     }
 };
+
+export const allUser = async (req: Request, res: Response) => {
+    try {
+        
+        const users = await usermodel.find();
+        if (!users) {
+            res.status(404).json({ message: "User not found" });
+            return;
+        }
+
+        
+        res.status(200).json({
+            status: "success",
+            message: "all Users retrieved successfully",
+           users,
+        });
+    } catch (error) {
+        console.error("Error retrieving user:", error);
+
+
+        res.status(500).json({
+            message: "An error occurred while retrieving the user",
+        });
+    }
+};

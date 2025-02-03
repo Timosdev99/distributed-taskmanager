@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import TaskModel, { TaskDocument } from "../MODELS/task";
 import { setCache, deleteCache, getCache } from "../utils/caching";
 import mongoose from "mongoose";
-
+import { socketServer } from "..";
 
 
 interface CreateTaskRequest {
@@ -86,6 +86,7 @@ export const createTask = async (req: Request<{}, {}, CreateTaskRequest>, res: R
     });
 
     await task.save();
+    socketServer.notifyTaskCreated(task);
     res.status(201).json({
       message: "Task successfully created",
       task
@@ -181,21 +182,28 @@ export const updateTask = async (req: Request<{}, {}, UpdateTaskRequest>, res: R
     }
 
 
+    const previousTask = await TaskModel.findById(_id);
+    
     const updatedTask = await TaskModel.findByIdAndUpdate(
       _id,
       {
         ...updates,
         lastActivityAt: new Date()
       },
-      {
-        new: true,
-        runValidators: true
-      }
+      { new: true, runValidators: true }
     );
 
     if (!updatedTask) {
       res.status(404).json({ message: "Task not found" });
-      return 
+      return;
+    }
+
+   
+    socketServer.notifyTaskUpdated(updatedTask, updates);
+    
+    
+    if (updates.assignedTo && previousTask?.assignedTo !== updates.assignedTo) {
+      socketServer.notifyTaskAssigned(updatedTask, previousTask?.assignedTo as string) ;
     }
      
     deleteCache(_id);
@@ -238,6 +246,7 @@ export const addComment = async (req: Request, res: Response) => {
 
     task.lastActivityAt = new Date();
     await task.save();
+    socketServer.notifyCommentAdded(task, task.comments);
 
     res.status(200).json({
       message: "Comment added successfully",
