@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import TaskModel, { TaskDocument } from "../MODELS/task";
 import { setCache, deleteCache, getCache } from "../utils/caching";
 import mongoose from "mongoose";
+import { publishTaskToStream } from "../utils/queuing";
 import { socketServer } from "..";
 
 
@@ -86,6 +87,25 @@ export const createTask = async (req: Request<{}, {}, CreateTaskRequest>, res: R
     });
 
     await task.save();
+    
+    const taskData = {
+      title,
+      description,
+      status,
+      priority,
+      assignedTo,
+      dueDate: new Date(dueDate).toISOString(),
+      estimatedHours: estimatedHours?.toString() || "",
+      tags: tags ? JSON.stringify(tags) : "",
+      category: category || "",
+      watchers: watchers ? JSON.stringify(watchers) : "",
+      createdBy: req.user.name || 'system',
+      createdAt: new Date().toISOString()
+    };
+
+    
+    await publishTaskToStream(taskData);
+
     socketServer.notifyTaskCreated(task);
     res.status(201).json({
       message: "Task successfully created",
